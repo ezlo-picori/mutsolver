@@ -7,3 +7,10 @@ FROM mcr.microsoft.com/vscode/devcontainers/rust:0-${VARIANT}
 # [Optional] Uncomment this section to install additional packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
+
+RUN apt update && \
+  export DEBIAN_FRONTEND=noninteractive  && \
+  apt -y install --no-install-recommends python3-pip && \
+  pip3 install pre-commit && \
+  apt clean && \
+  rm -rf /var/lib/apt/lists/*
