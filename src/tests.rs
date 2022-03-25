@@ -80,4 +80,35 @@ impl Test {
         // Return list of tests
         list_test
     }
+
+    // Validate a word against a given test
+    pub fn run(&self, word: &str) -> bool {
+        match self {
+            Self::At(letter, position) => {
+                word.chars().nth(*position).map_or(false, |l| l == *letter)
+            }
+            Self::HasAtLeast(letter, count) => {
+                word.chars().filter(|&l| l == *letter).count() >= *count as usize
+            }
+            Self::HasAtMost(letter, count) => {
+                word.chars().filter(|&l| l == *letter).count() <= *count as usize
+            }
+            Self::HasPrefix(prefix) => word.starts_with(prefix),
+            Self::HasSuffix(suffix) => word.ends_with(suffix),
+        }
+    }
+}
+
+#[test]
+fn run_at_test() {
+    // "At" test should succeed if word contains the letter at given position
+    assert!(crate::Test::At('A', 0).run("ABCDE"));
+    assert!(crate::Test::At('D', 3).run("ABCDE"));
+
+    // "At" test should fail if word does not have the letter at given position
+    assert!(!crate::Test::At('A', 1).run("ABCDE"));
+    assert!(!crate::Test::At('Z', 0).run("ABCDE"));
+
+    // "At" test should fail if given position is out of range
+    assert!(!crate::Test::At('A', 9).run("ABCDE"));
 }
