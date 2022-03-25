@@ -2,17 +2,20 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
 
 #[derive(Debug)]
-pub enum DictError<'a> {
-    InconsistentSize(usize, usize, &'a str), // expected size, found size, incriminated word
-    DuplicateWord(usize, &'a str),           // incriminated word count and value
-    UnauthorizedCharacter(char, &'a str),    // incriminated character and word
+pub enum DictError {
+    InconsistentSize(usize, usize, String), // expected size, found size, incriminated word
+    DuplicateWord(usize, String),           // incriminated word count and value
+    UnauthorizedCharacter(char, String),    // incriminated character and word
 }
 
-impl<'a> Error for DictError<'a> {}
+impl Error for DictError {}
 
-impl<'a> std::fmt::Display for DictError<'a> {
+impl std::fmt::Display for DictError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::InconsistentSize(expected, found, word) => write!(
@@ -33,13 +36,26 @@ impl<'a> std::fmt::Display for DictError<'a> {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Dict<'a> {
+pub struct Dict {
     /// Dict are simple lists of words
-    #[serde(borrow)]
-    pub words: Vec<&'a str>,
+    pub words: Vec<String>,
 }
 
-impl<'a> Dict<'a> {
+impl Dict {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+
+        let dict: Dict = serde_json::from_reader(reader)?;
+
+        match dict.check() {
+            Some(err) => Err(Box::new(err)),
+            None => Ok(dict),
+        }
+    }
+}
+
+impl Dict {
     /// Check the dictionnary consistency
     ///
     /// Performs following checks:
@@ -57,9 +73,10 @@ impl<'a> Dict<'a> {
         let invalid_word = self
             .words
             .par_iter()
-            .find_any(|&&word| word.chars().count() != size);
+            .find_any(|&word| word.chars().count() != size);
 
-        invalid_word.map(|&word| DictError::InconsistentSize(size, word.chars().count(), word))
+        invalid_word
+            .map(|word| DictError::InconsistentSize(size, word.chars().count(), word.to_owned()))
     }
 
     /// Check list contains no duplicate
@@ -67,7 +84,7 @@ impl<'a> Dict<'a> {
         let count_map = self
             .words
             .par_iter()
-            .fold(HashMap::new, |mut acc, &word| {
+            .fold(HashMap::new, |mut acc, word| {
                 let count = acc.entry(word).or_insert(0);
                 *count += 1;
                 acc
@@ -82,7 +99,7 @@ impl<'a> Dict<'a> {
 
         let non_unique_word = count_map.par_iter().find_any(|(_, &count)| count != 1);
 
-        non_unique_word.map(|(&word, &count)| DictError::DuplicateWord(count, word))
+        non_unique_word.map(|(&word, &count)| DictError::DuplicateWord(count, word.to_owned()))
     }
 
     /// Check all characters are allowed
@@ -90,14 +107,14 @@ impl<'a> Dict<'a> {
         let invalid_word = self
             .words
             .par_iter()
-            .find_any(|&&word| !word.chars().all(|character| character.is_ascii_uppercase()));
+            .find_any(|&word| !word.chars().all(|character| character.is_ascii_uppercase()));
 
-        invalid_word.map(|&word| {
+        invalid_word.map(|word| {
             let bad_char = word
                 .chars()
                 .find(|character| !character.is_ascii_uppercase())
                 .unwrap();
-            DictError::UnauthorizedCharacter(bad_char, word)
+            DictError::UnauthorizedCharacter(bad_char, word.to_owned())
         })
     }
 }
