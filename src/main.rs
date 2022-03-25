@@ -33,6 +33,19 @@ fn main() {
     assert!(res.is_some());
     println!("Result: {}", res.unwrap());
 
-    let dict_read = mutsolver::Dict::from_file("./data/dict/sutom-6A.json");
+    let dict_read = mutsolver::Dict::from_file("./data/dict/sutom-6A.json").unwrap();
     println!("Dict read: {:?}", dict_read);
+
+    let word = "TOTALEMENT".to_string();
+    let options = mutsolver::Options::default();
+
+    let tests = mutsolver::Test::for_word(&word, &options);
+    println!("Tests for word '{}': {:?}", word, tests);
+
+    let tests_dict = mutsolver::Test::for_dict(&dict_read, &options);
+    println!(
+        "Tests for dict SUTOM A6: {:?} (TOTAL COUNT: {})",
+        tests_dict,
+        tests_dict.len()
+    );
 }
