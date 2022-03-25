@@ -10,8 +10,7 @@
         "mutantdino.resourcemonitor",
         "matklad.rust-analyzer",
         "tamasfe.even-better-toml",
-        "serayuzgur.crates",
-        "rust-lang.rust"
+        "serayuzgur.crates"
     ],
     "features": {
         "git": "latest"
