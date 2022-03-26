@@ -39,6 +39,8 @@ pub type WordList = Vec<String>;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Dict {
+    /// Dict version
+    version: String,
     /// Dict are simple lists of words
     pub words: WordList,
 }
