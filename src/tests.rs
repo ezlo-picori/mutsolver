@@ -155,3 +155,28 @@ fn run_has_suffix_test() {
     assert!(!crate::Test::HasSuffix("ZABCDE".to_string()).run("ABCDE"));
     assert!(!crate::Test::HasSuffix("DEZ".to_string()).run("ABCDE"));
 }
+
+#[test]
+fn get_for_word() {
+    let options = Options {
+        tests_keep_ratio: 0.01,
+        tests_xfix_lengths: 2,
+    };
+    let test_suite = Test::for_word("SEER", &options);
+
+    type Predicate = fn(&Test) -> bool;
+    let predicates: [(Predicate, usize); 5] = [
+        (|test| matches!(test, Test::At(_, _)), 4),
+        (|test| matches!(test, Test::HasPrefix(_)), 1),
+        (|test| matches!(test, Test::HasSuffix(_)), 1),
+        (|test| matches!(test, Test::HasAtLeast('E', 2)), 1),
+        (|test| matches!(test, Test::HasAtLeast(_, 1)), 3),
+    ];
+
+    for (predicate, expected_count) in predicates.iter() {
+        assert_eq!(
+            test_suite.iter().filter(|test| predicate(test)).count(),
+            *expected_count
+        );
+    }
+}
