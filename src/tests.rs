@@ -112,3 +112,44 @@ fn run_at_test() {
     // "At" test should fail if given position is out of range
     assert!(!crate::Test::At('A', 9).run("ABCDE"));
 }
+
+#[test]
+fn run_has_at_least_test() {
+    assert!(crate::Test::HasAtLeast('A', 1).run("ABCDE"));
+    assert!(!crate::Test::HasAtLeast('A', 2).run("ABCDE"));
+    assert!(crate::Test::HasAtLeast('A', 2).run("ABCADE"));
+    assert!(crate::Test::HasAtLeast('Z', 0).run("ABCDE"));
+    assert!(!crate::Test::HasAtLeast('Z', 1).run("ABCDE"));
+}
+
+#[test]
+fn run_has_at_most_test() {
+    assert!(!crate::Test::HasAtMost('A', 0).run("ABCDE"));
+    assert!(crate::Test::HasAtMost('A', 1).run("ABCDE"));
+    assert!(crate::Test::HasAtMost('A', 2).run("ABCDE"));
+    assert!(crate::Test::HasAtMost('A', 2).run("ABCADE"));
+    assert!(!crate::Test::HasAtMost('A', 2).run("ABCADEA"));
+    assert!(crate::Test::HasAtMost('Z', 1).run("ABCDE"));
+}
+
+#[test]
+fn run_has_prefix_test() {
+    assert!(crate::Test::HasPrefix("A".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasPrefix("AB".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasPrefix("ABC".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasPrefix("ABCD".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasPrefix("ABCDE".to_string()).run("ABCDE"));
+    assert!(!crate::Test::HasPrefix("ABCDEF".to_string()).run("ABCDE"));
+    assert!(!crate::Test::HasPrefix("ZAB".to_string()).run("ABCDE"));
+}
+
+#[test]
+fn run_has_suffix_test() {
+    assert!(crate::Test::HasSuffix("E".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasSuffix("DE".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasSuffix("CDE".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasSuffix("BCDE".to_string()).run("ABCDE"));
+    assert!(crate::Test::HasSuffix("ABCDE".to_string()).run("ABCDE"));
+    assert!(!crate::Test::HasSuffix("ZABCDE".to_string()).run("ABCDE"));
+    assert!(!crate::Test::HasSuffix("DEZ".to_string()).run("ABCDE"));
+}

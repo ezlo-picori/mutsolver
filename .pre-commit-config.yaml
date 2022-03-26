@@ -14,3 +14,10 @@ repos:
     hooks:
     -   id: fmt
     -   id: cargo-check
+hooks:
+- id: cargo-test
+  name: test
+  description: Run unit-tests with Cargo
+  entry: cargo test
+  language: system
+  types: [rust]
