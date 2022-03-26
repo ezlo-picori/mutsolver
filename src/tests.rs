@@ -12,8 +12,10 @@ pub enum Test {
     HasSuffix(String),    // suffix
 }
 
+pub type TestSuite = Vec<Test>;
+
 impl Test {
-    pub fn for_dict(dict: &Dict, options: &Options) -> Vec<Self> {
+    pub fn for_dict(dict: &Dict, options: &Options) -> TestSuite {
         let test_counts = dict
             .words
             .par_iter()
@@ -36,7 +38,7 @@ impl Test {
         let min_count = std::cmp::max((word_count as f32 * options.tests_keep_ratio) as usize, 2);
         let max_count = word_count - min_count;
 
-        let mut list_test = Vec::new();
+        let mut list_test = TestSuite::new();
         for (test, count) in test_counts.into_iter() {
             if min_count < count && count < max_count {
                 list_test.push(test);
@@ -46,8 +48,8 @@ impl Test {
     }
 
     /// Generate all tests suited for a given word
-    pub fn for_word(word: &str, options: &Options) -> Vec<Self> {
-        let mut list_test = Vec::new();
+    pub fn for_word(word: &str, options: &Options) -> TestSuite {
+        let mut list_test = TestSuite::new();
 
         // Add "At" tests
         word.chars()

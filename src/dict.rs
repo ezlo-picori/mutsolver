@@ -35,10 +35,12 @@ impl std::fmt::Display for DictError {
     }
 }
 
+pub type WordList = Vec<String>;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Dict {
     /// Dict are simple lists of words
-    pub words: Vec<String>,
+    pub words: WordList,
 }
 
 impl Dict {
