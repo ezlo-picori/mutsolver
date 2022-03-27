@@ -12,6 +12,18 @@ pub enum Test {
     HasSuffix(String),    // suffix
 }
 
+impl Clone for Test {
+    fn clone(&self) -> Self {
+        match self {
+            Self::At(l, p) => Self::At(*l, *p),
+            Self::HasAtMost(l, c) => Self::HasAtMost(*l, *c),
+            Self::HasAtLeast(l, c) => Self::HasAtLeast(*l, *c),
+            Self::HasPrefix(prefix) => Self::HasPrefix(prefix.clone()),
+            Self::HasSuffix(prefix) => Self::HasSuffix(prefix.clone()),
+        }
+    }
+}
+
 pub type TestSuite = Vec<Test>;
 
 impl Test {

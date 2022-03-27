@@ -1,4 +1,7 @@
-use mutsolver_core::Answers;
+use mutsolver_core::{
+    Answer::{NO, YES},
+    Answers,
+};
 mod fixtures;
 use fixtures::{fixture_dict, fixture_testsuite};
 
@@ -6,7 +9,7 @@ use fixtures::{fixture_dict, fixture_testsuite};
 fn test_answers_word() {
     let tests = fixture_testsuite();
     let answers = Answers::of_word("ABOUTI", &tests);
-    assert_eq!(answers.0, vec![true, true, true, false]);
+    assert_eq!(answers.0, vec![YES, YES, YES, NO]);
 }
 
 #[test]
@@ -17,9 +20,9 @@ fn test_answers_dict() {
     assert_eq!(
         dict_answers,
         vec![
-            Answers(vec![true, true, true, false]),
-            Answers(vec![true, true, false, true]),
-            Answers(vec![false, false, true, false]),
+            Answers(vec![YES, YES, YES, NO]),
+            Answers(vec![YES, YES, NO, YES]),
+            Answers(vec![NO, NO, YES, NO]),
         ]
     );
 }

@@ -1,9 +1,10 @@
 /// Description of a game current state
-use crate::Dict;
+use crate::{Answer, Dict, Test};
 
 #[derive(Debug)]
 pub enum GameError {
     InvalidSize(usize, usize, String), // expected size, found size, incriminated word
+    UnexpectedTest(Test, String),      // Invalid test, incriminated word
 }
 impl std::error::Error for GameError {}
 
@@ -15,6 +16,9 @@ impl std::fmt::Display for GameError {
                 "Size of '{}' differs from expectation ({} != {})",
                 &word, &expected, &found
             ),
+            Self::UnexpectedTest(test, word) => {
+                write!(f, "Test {:?} incompatible with word '{}'", test, word)
+            }
         }
     }
 }
@@ -62,6 +66,9 @@ impl<'a, 'b> Attempt<'a> {
                 acc
             });
 
+        // Traverse attempted incorrect characters and mark them MEH if
+        // answer counter for this character is non-null (then decrement
+        // said counter)
         for (sta, c) in states
             .iter_mut()
             .zip(attempt.chars())
@@ -74,6 +81,117 @@ impl<'a, 'b> Attempt<'a> {
         }
 
         Ok(Attempt(attempt, states))
+    }
+
+    pub fn answers(&self, test: &Test) -> Result<Answer, GameError> {
+        let states = &self.1;
+        match test {
+            Test::At(tl, tp) => {
+                // test letter, test position
+                let letter =
+                    self.0.chars().nth(*tp).ok_or_else(|| {
+                        GameError::UnexpectedTest(test.clone(), self.0.to_owned())
+                    })?;
+                let state = states.get(*tp).unwrap();
+                match state {
+                    State::YES => {
+                        if *tl == letter {
+                            Ok(Answer::YES)
+                        } else {
+                            Ok(Answer::NO)
+                        }
+                    }
+                    State::MEH | State::NO => {
+                        if *tl == letter {
+                            Ok(Answer::NO)
+                        } else {
+                            Ok(Answer::UNKNOWN)
+                        }
+                    }
+                }
+            }
+            Test::HasAtMost(tl, tc) => {
+                // test letter, test count
+                let occurences = self.0.chars().filter(|l| *l == *tl).count();
+                let valid_occurences = self
+                    .0
+                    .chars()
+                    .zip(states.iter())
+                    .filter(|(l, s)| *l == *tl && **s != State::NO)
+                    .count();
+
+                if occurences == valid_occurences {
+                    Ok(Answer::UNKNOWN)
+                } else if valid_occurences <= *tc as usize {
+                    Ok(Answer::YES)
+                } else {
+                    Ok(Answer::NO)
+                }
+            }
+            Test::HasAtLeast(tl, tc) => {
+                // test letter, test count
+                let letter_count = self.0.chars().filter(|l| *l == *tl).count();
+                if letter_count < *tc as usize {
+                    Ok(Answer::UNKNOWN)
+                } else if self
+                    .0
+                    .chars()
+                    .zip(states.iter())
+                    .filter(|(l, s)| *l == *tl && **s != State::NO)
+                    .count()
+                    >= *tc as usize
+                {
+                    Ok(Answer::YES)
+                } else {
+                    Ok(Answer::NO)
+                }
+            }
+            Test::HasPrefix(prefix) => {
+                if prefix.len() > self.0.chars().count() {
+                    Err(GameError::UnexpectedTest(test.clone(), self.0.to_owned()))
+                } else if prefix
+                    .chars()
+                    .zip(self.0.chars())
+                    .zip(self.1.iter())
+                    .all(|((pc, ac), st)| pc == ac && *st == State::YES)
+                {
+                    Ok(Answer::YES)
+                } else if prefix.chars().zip(self.0.chars()).zip(self.1.iter()).any(
+                    |((pc, ac), st)| pc != ac && *st == State::YES || pc == ac && *st != State::YES,
+                ) {
+                    Ok(Answer::NO)
+                } else {
+                    Ok(Answer::UNKNOWN)
+                }
+            }
+            Test::HasSuffix(suffix) => {
+                if suffix.len() > self.0.chars().count() {
+                    return Err(GameError::UnexpectedTest(test.clone(), self.0.to_owned()));
+                }
+
+                let start = self.0.chars().count() - suffix.len();
+
+                if suffix
+                    .chars()
+                    .zip(self.0.chars().skip(start))
+                    .zip(self.1.iter().skip(start))
+                    .all(|((sc, ac), st)| sc == ac && *st == State::YES)
+                {
+                    Ok(Answer::YES)
+                } else if suffix
+                    .chars()
+                    .zip(self.0.chars().skip(start))
+                    .zip(self.1.iter().skip(start))
+                    .any(|((sc, ac), st)| {
+                        sc != ac && *st == State::YES || sc == ac && *st != State::YES
+                    })
+                {
+                    Ok(Answer::NO)
+                } else {
+                    Ok(Answer::UNKNOWN)
+                }
+            }
+        }
     }
 }
 
