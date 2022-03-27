@@ -6,11 +6,12 @@ macro_rules! vecstr {
 
 #[test]
 fn test_dict_valid() {
-    let dict = Dict {
-        answers: vecstr!["ABACAS", "ABADER", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
-        allowed: vec![],
-    };
-    assert!(dict.check().is_none());
+    let dict = Dict::new(
+        vecstr!["ABACAS", "ABADER", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
+        vec![],
+    );
+    assert!(dict.is_ok());
+    let dict = dict.unwrap();
     assert_eq!(dict.len(), 6);
     assert!(!dict.is_empty());
 }
@@ -20,48 +21,57 @@ fn test_dict_valid() {
 
 #[test]
 fn test_dict_invalid_size() {
-    let dict = Dict {
-        answers: vecstr!["ABACAS", "ABADE", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
-        allowed: vec![],
-    };
-    match dict.check() {
-        Some(DictError::InconsistentSize(6, 5, _)) => (),
+    let dict = Dict::new(
+        vecstr!["ABACAS", "ABADE", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
+        vec![],
+    );
+    match dict {
+        Err(DictError::InconsistentSize(6, 5, _)) => (),
+        _ => panic!(),
+    }
+}
+
+#[test]
+fn test_dict_missing_answers() {
+    let dict = Dict::new(vec![], vecstr!["ABACAS", "ABADE"]);
+    match dict {
+        Err(DictError::MissingAnswers) => (),
         _ => panic!(),
     }
 }
 
 #[test]
 fn test_dict_invalid_duplicate() {
-    let dict = Dict {
-        answers: vecstr!["ABACAS", "ABATEE", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
-        allowed: vec![],
-    };
-    match dict.check() {
-        Some(DictError::DuplicateWord(2, _)) => (),
+    let dict = Dict::new(
+        vecstr!["ABACAS", "ABATEE", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
+        vec![],
+    );
+    match dict {
+        Err(DictError::DuplicateWord(2, _)) => (),
         _ => panic!(),
     }
 }
 
 #[test]
 fn test_dict_invalid_duplicate_both() {
-    let dict = Dict {
-        answers: vecstr!["ABACAS", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
-        allowed: vecstr!["ABATEE"],
-    };
-    match dict.check() {
-        Some(DictError::DuplicateWord(2, _)) => (),
+    let dict = Dict::new(
+        vecstr!["ABACAS", "ABAQUE", "ABASIE", "ABATEE", "ABATIS"],
+        vecstr!["ABATEE"],
+    );
+    match dict {
+        Err(DictError::DuplicateWord(2, _)) => (),
         _ => panic!(),
     }
 }
 
 #[test]
 fn test_dict_invalid_character() {
-    let dict = Dict {
-        answers: vecstr!["ABACAS", "ABADER", "ABAQUé", "ABASIE", "ABATEE", "ABATIS"],
-        allowed: vec![],
-    };
-    match dict.check() {
-        Some(DictError::UnauthorizedCharacter('é', _)) => (),
+    let dict = Dict::new(
+        vecstr!["ABACAS", "ABADER", "ABAQUé", "ABASIE", "ABATEE", "ABATIS"],
+        vec![],
+    );
+    match dict {
+        Err(DictError::UnauthorizedCharacter('é', _)) => (),
         _ => panic!(),
     }
 }

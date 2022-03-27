@@ -1,30 +1,6 @@
-use mutsolver_core::{Answers, Dict, Test, TestSuite};
-
-fn fixture_dict() -> Dict {
-    Dict {
-        answers: vec![
-            "ABOUTI".to_string(),
-            "ABONDE".to_string(),
-            "ASORTI".to_string(),
-        ],
-        allowed: vec![],
-    }
-}
-
-#[test]
-fn test_fixture_dict() {
-    let dict = fixture_dict();
-    assert!(dict.check().is_none());
-}
-
-fn fixture_testsuite() -> TestSuite {
-    vec![
-        Test::At('B', 1),
-        Test::HasPrefix("AB".to_string()),
-        Test::HasSuffix("TI".to_string()),
-        Test::At('D', 4),
-    ]
-}
+use mutsolver_core::Answers;
+mod fixtures;
+use fixtures::{fixture_dict, fixture_testsuite};
 
 #[test]
 fn test_answers_word() {

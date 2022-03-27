@@ -10,6 +10,7 @@ use std::path::Path;
 pub enum DictError {
     InconsistentSize(usize, usize, String), // expected size, found size, incriminated word
     DuplicateWord(usize, String),           // incriminated word count and value
+    MissingAnswers,                         // Answer list is empty
     UnauthorizedCharacter(char, String),    // incriminated character and word
 }
 
@@ -25,6 +26,9 @@ impl std::fmt::Display for DictError {
             ),
             Self::DuplicateWord(count, word) => {
                 write!(f, "Word '{}' found {} times.", &word, &count)
+            }
+            Self::MissingAnswers => {
+                write!(f, "List of answers is empty.")
             }
             Self::UnauthorizedCharacter(character, word) => write!(
                 f,
@@ -44,6 +48,27 @@ pub struct Dict {
     /// List of words that can be submitted but won't be the answer
     #[serde(default)]
     pub allowed: WordList,
+    /// Size of words
+    size: usize,
+}
+
+// Implement constructor for Dict
+impl Dict {
+    pub fn new(answers: WordList, allowed: WordList) -> Result<Self, DictError> {
+        if answers.is_empty() {
+            return Err(DictError::MissingAnswers);
+        }
+        let size = answers.get(0).unwrap().len();
+        let dict = Dict {
+            answers,
+            allowed,
+            size,
+        };
+        match dict.check() {
+            None => Ok(dict),
+            Some(e) => Err(e),
+        }
+    }
 }
 
 // Implement iterators for Dict
@@ -76,6 +101,10 @@ impl Dict {
         self.len() == 0
     }
 
+    pub fn word_size(&self) -> usize {
+        self.size
+    }
+
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
@@ -96,14 +125,14 @@ impl Dict {
     /// * All words have the same size
     /// * No duplicate exist in the word list
     /// * Only allowed characters (ASCII uppercase) are used
-    pub fn check(&self) -> Option<DictError> {
+    fn check(&self) -> Option<DictError> {
         self.check_size()
             .or_else(|| self.check_duplicate().or_else(|| self.check_characters()))
     }
 
     /// Check that all words share the same size
-    pub fn check_size(&self) -> Option<DictError> {
-        let size = self.answers[0].chars().count();
+    fn check_size(&self) -> Option<DictError> {
+        let size = self.size;
         let invalid_word = self
             .par_iter()
             .find_any(|&word| word.chars().count() != size);
@@ -113,7 +142,7 @@ impl Dict {
     }
 
     /// Check list contains no duplicate
-    pub fn check_duplicate(&self) -> Option<DictError> {
+    fn check_duplicate(&self) -> Option<DictError> {
         let count_map = self
             .par_iter()
             .fold(HashMap::new, |mut acc, word| {
@@ -135,7 +164,7 @@ impl Dict {
     }
 
     /// Check all characters are allowed
-    pub fn check_characters(&self) -> Option<DictError> {
+    fn check_characters(&self) -> Option<DictError> {
         let invalid_word = self
             .par_iter()
             .find_any(|&word| !word.chars().all(|character| character.is_ascii_uppercase()));
