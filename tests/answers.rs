@@ -2,11 +2,12 @@ use mutsolver_core::{Answers, Dict, Test, TestSuite};
 
 fn fixture_dict() -> Dict {
     Dict {
-        words: vec![
+        answers: vec![
             "ABOUTI".to_string(),
             "ABONDE".to_string(),
             "ASORTI".to_string(),
         ],
+        allowed: vec![],
     }
 }
 

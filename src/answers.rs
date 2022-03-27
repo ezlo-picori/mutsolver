@@ -19,10 +19,9 @@ impl Answers {
 
     /// Generate answers for all tests in a test-suite for each word of a dict.
     pub fn of_dict(dict: &Dict, tests: &TestSuite) -> DictAnswers {
-        let mut dict_answers = DictAnswers::with_capacity(dict.words.len());
+        let mut dict_answers = DictAnswers::with_capacity(dict.len());
 
-        dict.words
-            .par_iter()
+        dict.par_iter()
             .map(|word| Answers::of_word(word, tests))
             .collect_into_vec(&mut dict_answers);
 

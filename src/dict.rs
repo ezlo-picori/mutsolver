@@ -39,11 +39,43 @@ pub type WordList = Vec<String>;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Dict {
-    /// Dict are simple lists of words
-    pub words: WordList,
+    /// List of possible answers
+    pub answers: WordList,
+    /// List of words that can be submitted but won't be the answer
+    #[serde(default)]
+    pub allowed: WordList,
+}
+
+// Implement iterators for Dict
+impl<'a> IntoParallelRefIterator<'a> for Dict {
+    type Item = &'a String;
+    type Iter = rayon::iter::Chain<
+        rayon::slice::Iter<'a, std::string::String>,
+        rayon::slice::Iter<'a, std::string::String>,
+    >;
+
+    fn par_iter(&'a self) -> Self::Iter {
+        self.answers.par_iter().chain(self.allowed.par_iter())
+    }
+}
+impl std::iter::IntoIterator for Dict {
+    type Item = String;
+    type IntoIter = std::iter::Chain<std::vec::IntoIter<String>, std::vec::IntoIter<String>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.answers.into_iter().chain(self.allowed.into_iter())
+    }
 }
 
 impl Dict {
+    pub fn len(&self) -> usize {
+        self.answers.len() + self.allowed.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
@@ -71,9 +103,8 @@ impl Dict {
 
     /// Check that all words share the same size
     pub fn check_size(&self) -> Option<DictError> {
-        let size = self.words[0].chars().count();
+        let size = self.answers[0].chars().count();
         let invalid_word = self
-            .words
             .par_iter()
             .find_any(|&word| word.chars().count() != size);
 
@@ -84,7 +115,6 @@ impl Dict {
     /// Check list contains no duplicate
     pub fn check_duplicate(&self) -> Option<DictError> {
         let count_map = self
-            .words
             .par_iter()
             .fold(HashMap::new, |mut acc, word| {
                 let count = acc.entry(word).or_insert(0);
@@ -107,7 +137,6 @@ impl Dict {
     /// Check all characters are allowed
     pub fn check_characters(&self) -> Option<DictError> {
         let invalid_word = self
-            .words
             .par_iter()
             .find_any(|&word| !word.chars().all(|character| character.is_ascii_uppercase()));
 

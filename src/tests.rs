@@ -17,7 +17,6 @@ pub type TestSuite = Vec<Test>;
 impl Test {
     pub fn for_dict(dict: &Dict, options: &Options) -> TestSuite {
         let test_counts = dict
-            .words
             .par_iter()
             .fold(HashMap::new, |mut acc, word| {
                 Test::for_word(word, options).into_iter().for_each(|test| {
@@ -34,7 +33,7 @@ impl Test {
                 })
             });
 
-        let word_count = dict.words.len();
+        let word_count = dict.len();
         let min_count = std::cmp::max((word_count as f32 * options.tests_keep_ratio) as usize, 2);
         let max_count = word_count - min_count;
 
