@@ -1,46 +1,14 @@
+use crate::errors::DictError;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-#[derive(Debug)]
-pub enum DictError {
-    InconsistentSize(usize, usize, String), // expected size, found size, incriminated word
-    DuplicateWord(usize, String),           // incriminated word count and value
-    MissingAnswers,                         // Answer list is empty
-    UnauthorizedCharacter(char, String),    // incriminated character and word
-}
-
-impl Error for DictError {}
-
-impl std::fmt::Display for DictError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Self::InconsistentSize(expected, found, word) => write!(
-                f,
-                "Size of '{}' differs from expectation ({} != {})",
-                &word, &expected, &found
-            ),
-            Self::DuplicateWord(count, word) => {
-                write!(f, "Word '{}' found {} times.", &word, &count)
-            }
-            Self::MissingAnswers => {
-                write!(f, "List of answers is empty.")
-            }
-            Self::UnauthorizedCharacter(character, word) => write!(
-                f,
-                "Word '{}' contains invalid character '{}'",
-                &word, &character
-            ),
-        }
-    }
-}
-
 pub type WordList = Vec<String>;
 
+/// Dictionnaries contain the list of words allowed for a given game.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Dict {
     /// List of possible answers
@@ -105,7 +73,7 @@ impl Dict {
         self.size
     }
 
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
 

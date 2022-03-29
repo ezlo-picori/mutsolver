@@ -1,4 +1,5 @@
-use mutsolver_core::{Dict, DictError};
+use mutsolver_core::errors::DictError;
+use mutsolver_core::Dict;
 
 macro_rules! vecstr {
     ($($x:expr),*) => (vec![$($x.to_string()),*]);

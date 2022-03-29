@@ -1,25 +1,47 @@
+use crate::errors::Error;
 use crate::{Dict, TestSuite};
+
 /// Structure containing answers for a test suite
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 #[derive(Debug, PartialEq)]
 pub enum Answer {
-    UNKNOWN,
-    YES,
-    NO,
+    Unknown,
+    Yes,
+    No,
+}
+
+impl std::ops::Add<Self> for Answer {
+    type Output = Result<Self, Error>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match self {
+            Self::Unknown => Ok(rhs),
+            Self::Yes => match rhs {
+                Self::Unknown => Ok(self),
+                Self::Yes => Ok(self),
+                Self::No => Err(Error::IncompatibleAnswers(self, rhs)),
+            },
+            Self::No => match rhs {
+                Self::Unknown => Ok(self),
+                Self::Yes => Err(Error::IncompatibleAnswers(self, rhs)),
+                Self::No => Ok(self),
+            },
+        }
+    }
 }
 
 // TODO
 // Implement Answer addition => X + X = Ok(X)
-//                           => UNKNOWN + X = Ok(X)
-//                           => YES + NO = Err(InconsistentAnswers)
+//                           => Unknown + X = Ok(X)
+//                           => Yes + No = Err(InconsistentAnswers)
 // On a game, compute answers for each attempt and merge these
 // answers using this addition rule. This gives:
 //  * which tests have been answered
 //  * what is the answer of these tests for the game solution
 // NB: HasPrefix/Suffix can be answered by combining multiple attempts
 //     even if no single attempt answered the test. Think of a way to
-//     postprocess the list of answers to answer UNKNOWN tests by
+//     postprocess the list of answers to answer Unknown tests by
 //     combining results from other resolved tests.
 
 #[derive(Debug, PartialEq)]
@@ -27,19 +49,22 @@ pub struct Answers(pub Vec<Answer>);
 
 type DictAnswers = Vec<Answers>;
 
+impl std::iter::FromIterator<Answer> for Answers {
+    fn from_iter<I: std::iter::IntoIterator<Item = Answer>>(iter: I) -> Self {
+        Self(Vec::from_iter(iter))
+    }
+}
+
 impl Answers {
     /// Generate answers for all tests in a test-suite for a given word.
     pub fn of_word(word: &str, tests: &TestSuite) -> Self {
-        let mut answers = Answers(Vec::with_capacity(tests.len()));
-
-        tests.iter().for_each(|test| {
-            answers.0.push(match test.run(word) {
-                true => Answer::YES,
-                false => Answer::NO,
+        tests
+            .iter()
+            .map(|test| match test.run(word) {
+                true => Answer::Yes,
+                false => Answer::No,
             })
-        });
-
-        answers
+            .collect()
     }
 
     /// Generate answers for all tests in a test-suite for each word of a dict.
