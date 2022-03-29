@@ -47,7 +47,7 @@ impl std::ops::Add<Self> for Answer {
 #[derive(Debug, PartialEq)]
 pub struct Answers(pub Vec<Answer>);
 
-type DictAnswers = Vec<Answers>;
+pub type DictAnswers = Vec<Answers>;
 
 impl std::iter::FromIterator<Answer> for Answers {
     fn from_iter<I: std::iter::IntoIterator<Item = Answer>>(iter: I) -> Self {
