@@ -4,7 +4,7 @@ use crate::{Dict, TestSuite};
 /// Structure containing answers for a test suite
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Answer {
     Unknown,
     Yes,
@@ -77,11 +77,16 @@ impl Answers {
 
         dict_answers
     }
+}
 
-    // /// Generate answers for a game given current attempts
-    // pub fn of_game(game: &Game, tests: &TestSuite ) -> Answers {
-    //     let mut answers = Answers(Vec::with_capacity(tests.len()));
+impl std::ops::Add<Self> for Answers {
+    type Output = Result<Self, Error>;
 
-    //     // TODO: finish after attempts.answers(&Test) -> Answer
-    // }
+    fn add(self, rhs: Self) -> Self::Output {
+        self.0
+            .iter()
+            .zip(rhs.0.iter())
+            .map(|(l, r)| *l + *r)
+            .collect()
+    }
 }

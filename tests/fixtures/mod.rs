@@ -7,6 +7,7 @@ pub fn fixture_dict() -> Dict {
             "ABOUTI".to_string(),
             "ABONDE".to_string(),
             "ASORTI".to_string(),
+            "ABSOLU".to_string(),
         ],
         vec![],
     )
@@ -20,5 +21,6 @@ pub fn fixture_testsuite() -> TestSuite {
         Test::HasPrefix("AB".to_string()),
         Test::HasSuffix("TI".to_string()),
         Test::At('D', 4),
+        Test::HasAtLeast('L', 1),
     ]
 }

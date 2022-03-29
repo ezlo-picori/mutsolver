@@ -9,7 +9,7 @@ use fixtures::{fixture_dict, fixture_testsuite};
 fn test_answers_word() {
     let tests = fixture_testsuite();
     let answers = Answers::of_word("ABOUTI", &tests);
-    assert_eq!(answers.0, vec![Yes, Yes, Yes, No]);
+    assert_eq!(answers.0, vec![Yes, Yes, Yes, No, No]);
 }
 
 #[test]
@@ -20,9 +20,10 @@ fn test_answers_dict() {
     assert_eq!(
         dict_answers,
         vec![
-            Answers(vec![Yes, Yes, Yes, No]),
-            Answers(vec![Yes, Yes, No, Yes]),
-            Answers(vec![No, No, Yes, No]),
+            Answers(vec![Yes, Yes, Yes, No, No]),
+            Answers(vec![Yes, Yes, No, Yes, No]),
+            Answers(vec![No, No, Yes, No, No]),
+            Answers(vec![Yes, Yes, No, No, Yes]),
         ]
     );
 }
