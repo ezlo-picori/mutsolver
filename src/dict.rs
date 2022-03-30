@@ -1,6 +1,6 @@
 use crate::errors::DictError;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde::{Deserialize, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
@@ -9,15 +9,45 @@ use std::path::Path;
 pub type WordList = Vec<String>;
 
 /// Dictionnaries contain the list of words allowed for a given game.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq)]
 pub struct Dict {
     /// List of possible answers
     pub answers: WordList,
     /// List of words that can be submitted but won't be the answer
-    #[serde(default)]
     pub allowed: WordList,
     /// Size of words
     size: usize,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct DictRepr {
+    answers: WordList,
+    #[serde(default)]
+    allowed: WordList,
+}
+
+impl Serialize for Dict {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let dict_repr = DictRepr {
+            answers: self.answers.clone(),
+            allowed: self.allowed.clone(),
+        };
+        dict_repr.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Dict {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let dict_repr = DictRepr::deserialize(deserializer)?;
+        Dict::new(dict_repr.answers, dict_repr.allowed)
+            .map_err(|err| D::Error::custom(format!("{}", err)))
+    }
 }
 
 // Implement constructor for Dict

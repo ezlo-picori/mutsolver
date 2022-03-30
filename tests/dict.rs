@@ -1,5 +1,7 @@
 use mutsolver_core::errors::DictError;
 use mutsolver_core::Dict;
+mod fixtures;
+use fixtures::fixture_dict;
 
 macro_rules! vecstr {
     ($($x:expr),*) => (vec![$($x.to_string()),*]);
@@ -75,4 +77,12 @@ fn test_dict_invalid_character() {
         Err(DictError::UnauthorizedCharacter('é', _)) => (),
         _ => panic!(),
     }
+}
+
+#[test]
+fn test_serde() {
+    let dict = fixture_dict();
+    let bindict = bincode::serialize(&dict).unwrap();
+    let dict2 = bincode::deserialize(&bindict).unwrap();
+    assert_eq!(dict, dict2);
 }
