@@ -146,37 +146,59 @@ impl<'a> Game<'a> {
                 //     iterating over all tests and for each:
                 //     - compute the probability "p" that this word will answer the test
                 //     - add to the word score: s += p * w
-                let word_score: Vec<u64> = self
-                    .dict_answers
-                    .par_iter()
-                    .map(|_word_answers| {
-                        // Compute list of probabilities for this word
-                        self.tests
-                            .iter()
-                            .map(|test| match test {
-                                Test::At(_, _) => 1,
-                                _ => 26,
-                            })
-                            .zip(test_weight.iter())
-                            .map(|(probability, weight)| probability * *weight)
-                            .sum()
-                    })
-                    .collect();
 
-                let best_candidate = self
-                    .dict
-                    .answers
-                    .iter()
-                    .zip(word_score.iter())
-                    .max_by_key(|(_, score)| **score)
+                let best_candidate = compatible_words
+                    .par_iter()
+                    .map(|(word, _)| {
+                        // Compute list of probabilities for this word
+                        (
+                            *word,
+                            self.tests
+                                .iter()
+                                .map(|test| match test {
+                                    Test::At(_, _) => {
+                                        if test.run(word) {
+                                            26
+                                        } else {
+                                            1
+                                        }
+                                    }
+                                    _ => 26,
+                                })
+                                .zip(test_weight.iter())
+                                .map(|(probability, weight)| probability * *weight)
+                                .sum::<u64>(),
+                        )
+                    })
+                    .max_by_key(|(_, score)| *score)
                     .unwrap();
 
                 let best_sacrifice = self
                     .dict
                     .allowed
-                    .iter()
-                    .zip(word_score.iter().skip(self.dict.answers.len() + 1))
-                    .max_by_key(|(_, score)| **score);
+                    .par_iter()
+                    .map(|word| {
+                        // Compute list of probabilities for this word
+                        (
+                            word,
+                            self.tests
+                                .iter()
+                                .map(|test| match test {
+                                    Test::At(_, _) => {
+                                        if test.run(word) {
+                                            26
+                                        } else {
+                                            1
+                                        }
+                                    }
+                                    _ => 26,
+                                })
+                                .zip(test_weight.iter())
+                                .map(|(probability, weight)| probability * *weight)
+                                .sum::<u64>(),
+                        )
+                    })
+                    .max_by_key(|(_, score)| *score);
 
                 match best_sacrifice {
                     Some((word, score)) if score > best_candidate.1 => {
