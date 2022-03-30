@@ -79,6 +79,13 @@ impl Answers {
     }
 }
 
+impl<'a> Answers {
+    /// Return iterator to underlying Vec
+    pub fn iter(&'a self) -> std::slice::Iter<'a, Answer> {
+        self.0.iter()
+    }
+}
+
 impl std::ops::Add<Self> for Answers {
     type Output = Result<Self, Error>;
 
