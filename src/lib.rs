@@ -9,6 +9,6 @@ pub mod tests;
 
 pub use answers::{Answer, Answers};
 pub use dict::Dict;
-pub use game::Game;
+pub use game::{Game, Guess};
 pub use options::Options;
 pub use tests::{Test, TestSuite};

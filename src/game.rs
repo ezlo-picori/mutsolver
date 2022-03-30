@@ -15,6 +15,7 @@ pub struct Game<'a> {
     tests: TestSuite,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Guess {
     Solution(String),  // Word solution
     Candidate(String), // Candidate for next attempt and its likelyhood
