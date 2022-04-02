@@ -59,21 +59,19 @@ fn test_next_guess() {
 
     let mut game = Game::new_with_tests(&dict, tests);
 
-    game.add(Attempt::from_answer("ABOUTI", "ABONDE").unwrap());
+    assert_eq!(
+        game.guess_next().unwrap(),
+        Guess::Candidate("ABONDE".to_string())
+    );
+
+    game.add(Attempt::from_answer("ABONDE", "ASORTI").unwrap());
 
     assert_eq!(
         game.guess_next().unwrap(),
-        Guess::Candidate("ABSOLU".to_string())
+        Guess::Solution("ASORTI".to_string())
     );
 
-    game.add(Attempt::from_answer("ABSOLU", "ABONDE").unwrap());
-
-    assert_eq!(
-        game.guess_next().unwrap(),
-        Guess::Solution("ABONDE".to_string())
-    );
-
-    game.add(Attempt::from_answer("ABONDE", "ABSOLU").unwrap());
+    game.add(Attempt::from_answer("ASORTI", "ABONDE").unwrap());
 
     assert_eq!(game.guess_next().unwrap(), Guess::NoSolution);
 }

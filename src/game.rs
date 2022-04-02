@@ -87,18 +87,18 @@ impl<'a> Game<'a> {
 
         // 2 - Filter dict "answer" words to keep only ones compatibles with
         // current answers
-        let compatible_words: Vec<(&String, &Answers)> = self
+        type WordAnswersList<'a> = Vec<(&'a String, &'a Answers)>;
+        let (compatible_words, incompatible_words): (WordAnswersList, WordAnswersList) = self
             .dict
             .answers
             .iter()
             .zip(self.dict_answers.iter())
-            .filter(|(_, word_answers)| {
+            .partition(|(_, word_answers)| {
                 known_answers
                     .iter()
                     .zip(word_answers.iter())
                     .all(|(known_answer, word_answer)| (*known_answer + *word_answer).is_ok())
-            })
-            .collect();
+            });
 
         // 3 - Count compatible words (N)
         match compatible_words.len() {
@@ -173,10 +173,10 @@ impl<'a> Game<'a> {
                     .max_by_key(|(_, score)| *score)
                     .unwrap();
 
-                let best_sacrifice = self
-                    .dict
-                    .allowed
+                let best_sacrifice = incompatible_words
                     .par_iter()
+                    .map(|(word, _)| *word)
+                    .chain(self.dict.allowed.par_iter())
                     .map(|word| {
                         // Compute list of probabilities for this word
                         (
